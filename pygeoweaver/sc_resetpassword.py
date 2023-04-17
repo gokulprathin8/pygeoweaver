@@ -9,5 +9,5 @@ def reset_password(password):
   Reset password for localhost
   """
   download_geoweaver_jar()
-  subprocess.run(f"java -jar {get_geoweaver_jar_path()} resetpassword -p {password}")
+  subprocess.run(f"java -jar {get_geoweaver_jar_path()} resetpassword -p {password}", shell=True)
 
