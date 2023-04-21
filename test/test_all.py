@@ -2,6 +2,9 @@
 The main function of pygeoweaver
 To run in CLI mode. 
 """
+import subprocess
+from unittest.mock import patch
+
 from pygeoweaver import detail_host, detail_process, detail_workflow
 from pygeoweaver import export_workflow
 from pygeoweaver import show_history
@@ -11,28 +14,23 @@ from pygeoweaver import start, stop
 
 import unittest
 
-class Testing(unittest.TestCase):
 
-    def test_main():
-        # start geoweaver
-        #start()
-        # stop geoweaver
-        # stop()
-        # list resources
-        #list_hosts()
-        #list_processes()
-        list_workflows()
-        # show history
-        #show_history("ll3u3W78eOEfklxhBJ")
-        # detail host
-        # detail_host("100001")
-        # detail process
-        # detail_process("7pxu8c")
-        #detail_workflow("5jnhcrq33znbu2mue9v2")
-        # import workflow
-        #import_workflow("/Users/joe/Downloads/gr3ykr8dynu12vrwq11oy.zip")
-        # export workflow
-        export_workflow("gr3ykr8dynu12vrwq11oy", "4", "/Users/joe/Downloads/test_pygeoweaver_export.zip")
+class TestPyGeoweaver(unittest.TestCase):
+
+    @patch('pygeoweaver.utils.download_geoweaver_jar')
+    @patch.object(subprocess, 'run')
+    @patch('pygeoweaver.utils.get_geoweaver_jar_path')
+    @patch('pygeoweaver.utils.get_root_dir')
+    def test_detail_workflow(self, mock_get_root_dir, mock_get_geoweaver_jar_path, mock_subprocess_run,
+                             mock_download_geoweaver_jar):
+        workflow_id = 'workflow_id'
+        mock_get_root_dir.return_value = '/root/dir'
+        mock_get_geoweaver_jar_path.return_value = '/geoweaver/jar'
+        detail_workflow(workflow_id)
+        mock_download_geoweaver_jar.assert_called_once()
+        mock_subprocess_run.assert_called_once_with(
+            ["java", "-jar", "/geoweaver/jar", "detail", f"--workflow-id={workflow_id}"],
+            cwd='/root/dir/')
 
 
 if __name__ == "__main__":
