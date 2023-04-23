@@ -2,7 +2,7 @@ import uuid
 import pytest
 import subprocess
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from pygeoweaver.utils import download_geoweaver_jar, get_geoweaver_jar_path, get_home_dir, check_os, get_root_dir
 from pygeoweaver.sc_detail import detail_host, detail_process, detail_workflow
@@ -82,3 +82,28 @@ def test_detail_workflow_with_invalid_workflow(mocker):
         ["java", "-jar", get_geoweaver_jar_path(), "detail", f"--workflow-id={workflow_id}"],
         cwd=f"{get_root_dir()}/"
     )
+
+
+def test_detail_process(mocker):
+    subprocess_mock = Mock()
+    subprocess.run = subprocess_mock
+
+    subprocess_mock = Mock()
+    subprocess.run = subprocess_mock
+
+    download_geoweaver_jar_mock = Mock()
+    get_root_dir_mock = Mock(return_value=get_root_dir())
+    get_geoweaver_jar_path_mock = Mock(return_value=get_geoweaver_jar_path())  # Fix: Invoke Mock to create an instance
+
+    with patch("pygeoweaver.utils.download_geoweaver_jar", download_geoweaver_jar_mock):
+        with patch("pygeoweaver.utils.get_geoweaver_jar_path", get_geoweaver_jar_path_mock):
+            with patch("pygeoweaver.utils.get_root_dir", get_root_dir_mock):
+                with patch("subprocess.run", subprocess_mock):
+                    process_id = "12345"
+                    detail_process(process_id=process_id)
+                    download_geoweaver_jar_mock.assert_called_once()
+                    subprocess_mock.assert_called_once_with(
+                        ["java", "-jar", get_geoweaver_jar_path_mock.return_value, "detail", f"--process-id={process_id}"],
+                        cwd=f"{get_root_dir_mock.return_value}/")
+
+
