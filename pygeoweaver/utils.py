@@ -48,24 +48,51 @@ def get_java_bin_from_which():
 
     return java_bin_path
 
+def check_homebrew_installation():
+    try:
+        subprocess.run(["brew", "--version"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+def install_homebrew():
+    """Install Homebrew."""
+    try:
+        print("Installing Homebrew...")
+        subprocess.run('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"',
+                       shell=True, check=True)
+        print("Homebrew installed successfully.")
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to install Homebrew: {e}")
 
 def get_java_bin_path():
-    # Check if the 'java' command is available in the system path
-    if sys.platform.startswith("win"):  # Windows
-        java_exe = "java.exe"
-    else:
-        java_exe = "java"
+    java_bin_path = None  # by `None` we assume java is not installed on the user system
+    os_name = platform.system().lower()
 
-    java_bin_path = None
-
-    for path in os.environ.get("PATH", "").split(os.pathsep):
-        bin_path = os.path.join(path, java_exe)
-        if os.path.isfile(bin_path) and os.access(bin_path, os.X_OK):
-            java_bin_path = bin_path
-            break
+    # now get java bin path, from the installation
+    if os_name == "windows":
+        java_bin_path = subprocess.check_output("where java",
+                                                stderr=subprocess.STDOUT, shell=True).decode().strip().split('\n')[0]
+    if os_name in ["linux", "darwin"]:
+        java_bin_path = subprocess.check_output("where java", stderr=subprocess.STDOUT, shell=True).decode().strip()
 
     if java_bin_path is None:
-        java_bin_path = get_java_bin_from_which()
+        # if the `path` is None, it means java is not installed on the user PC.
+        if os_name == "linux":
+            cmd = "sudo apt update -y && sudo apt install default-jdk -y && java --version"
+            subprocess.run(cmd, shell=True, stderr=subprocess.STDOUT)
+            java_bin_path = subprocess.check_output("where java", stderr=subprocess.STDOUT, shell=True).decode().strip()
+        if os_name == "darwin":
+            if check_homebrew_installation():
+                print("Homebrew is already installed")
+            else:
+                install_homebrew()
+
+            cmd = "brew install openjdk@11"
+            subprocess.run(cmd, shell=True, stderr=subprocess.STDOUT)
+            java_bin_path = subprocess.check_output("where java", stderr=subprocess.STDOUT, shell=True).decode().strip()
+        if os_name == "windows":
+            pass
 
     return java_bin_path
 
